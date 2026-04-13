@@ -112,8 +112,9 @@ interface SyncOptions {
  * Her operasyon sırasıyla işlenir.
  * Çakışma olursa onConflict callback çağrılır.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function flushQueue(
-  supabase: ReturnType<typeof import('@supabase/supabase-js').createClient>,
+  supabase: any,
   options: SyncOptions = {}
 ): Promise<{ synced: number; failed: number; conflicts: number }> {
   const queue = await getAllQueued();

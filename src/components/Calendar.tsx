@@ -21,7 +21,7 @@ import {
 } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, X, AlertTriangle } from 'lucide-react';
-import { cn, formatTime, getContrastColor, generateId } from '@/lib/utils';
+import { cn, formatTime, generateId } from '@/lib/utils';
 import { supabase, TABLES } from '@/lib/supabaseClient';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useOfflineSync } from '@/hooks/useOfflineSync';

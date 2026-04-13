@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Home, LogIn, ChevronRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Home, LogIn, ChevronRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signUpWithEmail, signInWithEmail, createFamily, joinFamily } from '@/lib/auth';
 import type { FamilyRole } from '@/types';
@@ -106,11 +106,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const handleRoleSelect = async () => {
     if (!userId || !familyId) return;
     setIsLoading(true);
-    // Sadece yeni kurulum için rol güncelle (joinFamily zaten ayarlıyor)
-    if (familyMode === 'create') {
-      const { updateMemberRole } = await import('@/lib/auth');
-      // parent zaten default, ama seçim varsa güncelle
-    }
+    // joinFamily sırasında rol zaten ayarlandı, burada ek işlem gerekmez
     setIsLoading(false);
     setStep('demo');
   };

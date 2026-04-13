@@ -1,16 +1,14 @@
 /**
  * useRealtimeSync Hook
  * Supabase Realtime üzerinden belirli bir tablo için canlı güncellemeler alır.
- * Bağlantı kesilince otomatik yeniden abone olur.
  */
 
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 type ChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
-interface UseRealtimeSyncOptions<T extends Record<string, unknown>> {
+interface UseRealtimeSyncOptions<T> {
   table: string;
   familyId: string | null;
   event?: ChangeEvent;
@@ -20,7 +18,7 @@ interface UseRealtimeSyncOptions<T extends Record<string, unknown>> {
   enabled?: boolean;
 }
 
-export function useRealtimeSync<T extends Record<string, unknown>>({
+export function useRealtimeSync<T>({
   table,
   familyId,
   event = '*',
@@ -34,24 +32,19 @@ export function useRealtimeSync<T extends Record<string, unknown>>({
   const subscribe = useCallback(() => {
     if (!familyId || !enabled) return;
 
-    // Önceki kanalı temizle
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
     const channelName = `realtime:${table}:${familyId}:${Date.now()}`;
 
-    channelRef.current = supabase
-      .channel(channelName)
-      .on<T>(
-        'postgres_changes' as Parameters<ReturnType<typeof supabase.channel>['on']>[0],
-        {
-          event,
-          schema: 'public',
-          table,
-          filter: `family_id=eq.${familyId}`,
-        } as Parameters<ReturnType<typeof supabase.channel>['on']>[1],
-        (payload: RealtimePostgresChangesPayload<T>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    channelRef.current = (supabase.channel(channelName) as any)
+      .on(
+        'postgres_changes',
+        { event, schema: 'public', table, filter: `family_id=eq.${familyId}` },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           const eventType = payload.eventType;
           if (eventType === 'INSERT' && onInsert && payload.new) {
             onInsert(payload.new as T);
@@ -62,9 +55,9 @@ export function useRealtimeSync<T extends Record<string, unknown>>({
           }
         }
       )
-      .subscribe((status) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .subscribe((status: any) => {
         if (status === 'CHANNEL_ERROR') {
-          // 3 saniye sonra yeniden dene
           setTimeout(subscribe, 3000);
         }
       });
@@ -72,7 +65,6 @@ export function useRealtimeSync<T extends Record<string, unknown>>({
 
   useEffect(() => {
     subscribe();
-
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -84,10 +76,6 @@ export function useRealtimeSync<T extends Record<string, unknown>>({
 
 // ── Çoklu Tablo Dinleme ───────────────────────────────────────────────────────
 
-/**
- * Birden fazla tablo için tek seferde realtime abonelik.
- * Büyük ailelerde connection sayısını azaltır.
- */
 export function useMultiTableSync(
   familyId: string | null,
   handlers: {
@@ -106,18 +94,15 @@ export function useMultiTableSync(
       supabase.removeChannel(channelRef.current);
     }
 
-    let channel = supabase.channel(`multi:${familyId}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any = supabase.channel(`multi:${familyId}`);
 
     for (const handler of handlers) {
       channel = channel.on(
-        'postgres_changes' as Parameters<typeof channel.on>[0],
-        {
-          event: '*',
-          schema: 'public',
-          table: handler.table,
-          filter: `family_id=eq.${familyId}`,
-        } as Parameters<typeof channel.on>[1],
-        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+        'postgres_changes',
+        { event: '*', schema: 'public', table: handler.table, filter: `family_id=eq.${familyId}` },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           const rec = (payload.new ?? payload.old) as Record<string, unknown>;
           if (payload.eventType === 'INSERT') handler.onInsert?.(rec);
           else if (payload.eventType === 'UPDATE') handler.onUpdate?.(rec);

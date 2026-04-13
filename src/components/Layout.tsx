@@ -4,7 +4,7 @@
  * Erişilebilirlik: aria-labels, klavye navigasyonu, yüksek kontrast desteği.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Calendar,

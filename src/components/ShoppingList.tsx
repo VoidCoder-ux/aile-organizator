@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, X, Camera, Mic, Check, Trash2, Filter } from 'lucide-react';
+import { Plus, X, Camera, Mic, Check, Trash2 } from 'lucide-react';
 import { cn, generateId, SHOPPING_CATEGORY_LABELS, SHOPPING_CATEGORY_ICONS } from '@/lib/utils';
 import { supabase, TABLES } from '@/lib/supabaseClient';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
@@ -27,7 +27,6 @@ const CATEGORY_ORDER: ShoppingCategory[] = [
 export default function ShoppingList({ familyId, userId, canEdit = true }: ShoppingListProps) {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [filter, setFilter] = useState<ShoppingCategory | 'all'>('all');
-  const [showAddForm, setShowAddForm] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState<ShoppingCategory>('other');
   const [newItemQuantity, setNewItemQuantity] = useState(1);

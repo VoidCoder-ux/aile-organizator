@@ -3,7 +3,7 @@
  * Auth guard, lazy loading, PWA update prompt, settings provider.
  */
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { supabase } from '@/lib/supabaseClient';
@@ -194,7 +194,7 @@ export default function App() {
     language: 'tr',
   });
 
-  const { role, family, members, isLoading: roleLoading } = useFamilyRole(profile?.id ?? null);
+  const { role, family, members } = useFamilyRole(profile?.id ?? null);
 
   // Auth durumunu dinle
   useEffect(() => {

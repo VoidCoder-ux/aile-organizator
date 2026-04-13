@@ -92,7 +92,7 @@ export function useOfflineSync(
     setIsSyncing(true);
 
     try {
-      const result = await flushQueue(supabase, {
+      const result = await flushQueue(supabase as unknown, {
         onConflict: (item) => {
           console.warn('[OfflineSync] Conflict detected for item:', item.id);
         },
