@@ -3,8 +3,7 @@
  * Adımlar: Hoş geldin → Hesap Oluştur → Aile Kur/Katıl → Rol Seç → Demo
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Home, LogIn, ChevronRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signUpWithEmail, signInWithEmail, createFamily, joinFamily } from '@/lib/auth';
@@ -25,7 +24,6 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
-  const navigate = useNavigate();
   const [step, setStep] = useState<OnboardingStep>('welcome');
   const [authMode, setAuthMode] = useState<AuthMode>('signup');
   const [familyMode, setFamilyMode] = useState<FamilyMode>('create');
@@ -115,8 +113,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const handleComplete = () => {
     if (userId) {
-      onComplete(userId);
-      navigate('/calendar');
+      onComplete(userId); // App.tsx'deki OnboardingRoute navigate('/calendar') yapıyor
     }
   };
 
