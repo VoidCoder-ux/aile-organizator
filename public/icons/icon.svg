@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Arka plan -->
+  <rect width="512" height="512" rx="100" fill="#6366f1"/>
+  <!-- Ev çatısı -->
+  <polygon points="256,80 100,220 412,220" fill="white" opacity="0.95"/>
+  <!-- Ev gövdesi -->
+  <rect x="140" y="220" width="232" height="180" rx="8" fill="white" opacity="0.95"/>
+  <!-- Kapı -->
+  <rect x="218" y="300" width="76" height="100" rx="6" fill="#6366f1"/>
+  <!-- Sol pencere -->
+  <rect x="155" y="250" width="60" height="50" rx="4" fill="#a5b4fc"/>
+  <!-- Sağ pencere -->
+  <rect x="297" y="250" width="60" height="50" rx="4" fill="#a5b4fc"/>
+  <!-- Aile sembolleri (daireler) -->
+  <circle cx="175" cy="160" r="18" fill="#f9a8d4"/>
+  <circle cx="215" cy="145" r="22" fill="#fde68a"/>
+  <circle cx="257" cy="138" r="24" fill="white" opacity="0.9"/>
+  <circle cx="300" cy="145" r="22" fill="#fde68a"/>
+  <circle cx="340" cy="155" r="16" fill="#86efac"/>
+</svg>

@@ -1,0 +1,59 @@
+# ── Bağımlılıklar ─────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build Çıktıları ───────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+
+# ── Ortam Değişkenleri (GÜVENLİK: ASLA COMMIT ETMEYİN) ──────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Editör & IDE ──────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS Dosyaları ─────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Log Dosyaları ─────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Test Çıktıları ────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ── Vite ─────────────────────────────────────────────────────────────────────
+*.local
+
+# ── TypeScript ────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Supabase (local dev) ──────────────────────────────────────────────────────
+supabase/.temp/
+
+# ── Claude Code ───────────────────────────────────────────────────────────────
+.claude/

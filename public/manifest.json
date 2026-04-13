@@ -1,0 +1,58 @@
+{
+  "name": "Akıllı Aile Organizatörü",
+  "short_name": "AileOrg",
+  "description": "Ailenizi organize edin: takvim, görevler, alışveriş ve yemek planı.",
+  "start_url": "/aile-organizator/",
+  "scope": "/aile-organizator/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/aile-organizator/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/aile-organizator/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/aile-organizator/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Takvim",
+      "short_name": "Takvim",
+      "description": "Aile takvimine git",
+      "url": "/aile-organizator/calendar",
+      "icons": [{ "src": "/aile-organizator/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Görevler",
+      "short_name": "Görevler",
+      "description": "Görev listesine git",
+      "url": "/aile-organizator/tasks",
+      "icons": [{ "src": "/aile-organizator/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Alışveriş",
+      "short_name": "Alışveriş",
+      "description": "Alışveriş listesine git",
+      "url": "/aile-organizator/shopping",
+      "icons": [{ "src": "/aile-organizator/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

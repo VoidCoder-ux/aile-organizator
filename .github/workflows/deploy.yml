@@ -1,0 +1,105 @@
+# GitHub Pages Otomatik Deploy Workflow
+# Trigger: main branch'e her push'ta çalışır
+# Build: Node.js + npm ci + vite build
+# Deploy: GitHub Pages (Actions artifact)
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Manuel tetikleme seçeneği
+  workflow_dispatch:
+
+# GitHub Pages deploy için zorunlu izinler
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Aynı anda tek deploy çalışsın, önceki iptal edilsin
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  # ─── Build Job ─────────────────────────────────────────────────────────────
+  build:
+    name: Build PWA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          # GitHub Secrets'tan Supabase credentials al
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_APP_NAME: 'Akıllı Aile Organizatörü'
+          VITE_REPO_BASE_PATH: '/aile-organizator/'
+
+      - name: Verify dist output
+        run: |
+          echo "Build output contents:"
+          ls -la dist/
+          echo "Checking index.html exists..."
+          test -f dist/index.html && echo "✅ index.html found" || (echo "❌ index.html missing" && exit 1)
+          echo "Checking service worker..."
+          test -f dist/sw.js && echo "✅ sw.js found" || echo "⚠️  sw.js not found (check vite-plugin-pwa config)"
+          echo "Checking manifest..."
+          test -f dist/manifest.webmanifest && echo "✅ manifest found" || test -f dist/manifest.json && echo "✅ manifest.json found" || echo "⚠️  manifest not found"
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  # ─── Deploy Job ────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Post-deploy health check
+        run: |
+          DEPLOY_URL="${{ steps.deployment.outputs.page_url }}"
+          echo "Deployed to: $DEPLOY_URL"
+          echo "Waiting 10s for CDN propagation..."
+          sleep 10
+          # Health check — 200 döndürmeli
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Health check passed (HTTP $HTTP_STATUS)"
+          else
+            echo "⚠️  Health check returned HTTP $HTTP_STATUS (may still be propagating)"
+          fi
+          echo "Deployment URL: $DEPLOY_URL"
