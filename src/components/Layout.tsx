@@ -11,7 +11,6 @@ import {
   CheckSquare,
   ShoppingCart,
   UtensilsCrossed,
-  Bell,
   Settings,
   WifiOff,
   RefreshCw,
@@ -19,10 +18,13 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
+import NotificationPanel from '@/components/NotificationPanel';
 
 interface LayoutProps {
   largeFontMode?: boolean;
   highContrast?: boolean;
+  userId?: string | null;
+  familyId?: string | null;
 }
 
 const NAV_ITEMS = [
@@ -32,7 +34,7 @@ const NAV_ITEMS = [
   { to: 'meals', label: 'Yemekler', icon: UtensilsCrossed, ariaLabel: 'Yemek planına git' },
 ] as const;
 
-export default function Layout({ largeFontMode = false, highContrast = false }: LayoutProps) {
+export default function Layout({ largeFontMode = false, highContrast = false, userId = null, familyId = null }: LayoutProps) {
   const [showConflictBanner, setShowConflictBanner] = useState(false);
 
   const { isOnline, isSyncing, pendingCount, conflictCount, triggerSync } = useOfflineSync(
@@ -108,14 +110,8 @@ export default function Layout({ largeFontMode = false, highContrast = false }: 
               </button>
             )}
 
-            {/* Bildirim ikonu */}
-            <NavLink
-              to="settings"
-              aria-label="Bildirimler"
-              className="relative rounded-full p-2 hover:bg-accent transition-colors"
-            >
-              <Bell className="h-5 w-5" aria-hidden="true" />
-            </NavLink>
+            {/* Bildirim paneli */}
+            <NotificationPanel userId={userId} familyId={familyId} />
 
             {/* Ayarlar */}
             <NavLink

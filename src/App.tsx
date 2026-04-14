@@ -175,7 +175,7 @@ function AppContent({
           noFamily
             ? <Navigate to="/onboarding" replace />
             : profile
-              ? <Layout largeFontMode={settings.largeFontMode} highContrast={settings.highContrast} />
+              ? <Layout largeFontMode={settings.largeFontMode} highContrast={settings.highContrast} userId={profile?.id ?? null} familyId={family?.id ?? null} />
               : <Navigate to="/onboarding" replace />
         }>
           <Route index element={<Navigate to="calendar" replace />} />
