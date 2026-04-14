@@ -1,7 +1,26 @@
 -- ============================================================
 -- 008_notifications.sql
--- Bildirim sistemi: RLS + tetikleyici fonksiyonlar
+-- Bildirim sistemi: Tablo + RLS + tetikleyici fonksiyonlar
 -- ============================================================
+
+-- ── 0. Tabloyu oluştur ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    family_id  UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
+    type       TEXT NOT NULL CHECK (type IN (
+                   'task_assigned','task_due','event_reminder',
+                   'shopping_added','member_joined'
+               )),
+    title      TEXT NOT NULL,
+    body       TEXT NOT NULL,
+    data       JSONB,
+    is_read    BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id
+    ON public.notifications(user_id, is_read, created_at DESC);
 
 -- ── 1. RLS aktif ──────────────────────────────────────────────────────────────
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
