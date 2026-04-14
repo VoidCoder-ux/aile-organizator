@@ -73,13 +73,9 @@ export default function ShoppingList({ familyId, userId, canEdit = true }: Shopp
       added_by: userId,
       name: newItemName.trim(),
       quantity: newItemQuantity,
-      unit: newItemUnit || null,
+      ...(newItemUnit ? { unit: newItemUnit } : {}),
       category: newItemCategory,
       is_checked: false,
-      checked_by: null,
-      checked_at: null,
-      note: null,
-      image_url: null,
     };
 
     const { queued, error: writeError } = await writeOfflineFirst(TABLES.SHOPPING_ITEMS, 'INSERT', payload as Record<string, unknown>);
