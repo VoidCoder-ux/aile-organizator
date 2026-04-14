@@ -156,56 +156,61 @@ function AppContent({
   onSignOut: () => void;
   onProfileLoaded: (uid: string) => void;
 }) {
-  const { role, family, members } = useFamilyRole(profile?.id ?? null);
+  const { role, family, members, isLoading: familyLoading } = useFamilyRole(profile?.id ?? null);
 
   const sharedProps = { familyId: family?.id ?? '', userId: profile?.id ?? '' };
+
+  // Profil var ama aile yok → onboarding'e geri yönlendir
+  const noFamily = !familyLoading && profile && !family;
 
   return (
     <>
       <PWAUpdatePrompt />
       <Routes>
-        {/* Onboarding — giriş yapılmamış */}
+        {/* Onboarding — giriş yapılmamış veya aile kurulmamış */}
         <Route path="/onboarding" element={<OnboardingRoute onComplete={onProfileLoaded} />} />
 
-        {/* Auth guard: profil yoksa onboarding'e */}
+        {/* Auth guard: profil yoksa veya aile yoksa onboarding'e */}
         <Route path="/" element={
-          profile
-            ? <Layout largeFontMode={settings.largeFontMode} highContrast={settings.highContrast} />
-            : <Navigate to="/onboarding" replace />
+          noFamily
+            ? <Navigate to="/onboarding" replace />
+            : profile
+              ? <Layout largeFontMode={settings.largeFontMode} highContrast={settings.highContrast} />
+              : <Navigate to="/onboarding" replace />
         }>
           <Route index element={<Navigate to="calendar" replace />} />
 
           <Route path="calendar" element={
             <Suspense fallback={<PageSkeleton />}>
-              {sharedProps.familyId
-                ? <Calendar {...sharedProps} members={members} canCreate={role === 'parent' || role === 'child'} />
-                : <PageSkeleton />}
+              {familyLoading
+                ? <PageSkeleton />
+                : <Calendar {...sharedProps} members={members} canCreate={role === 'parent' || role === 'child'} />}
             </Suspense>
           } />
 
           <Route path="tasks" element={
             <Suspense fallback={<PageSkeleton />}>
-              {sharedProps.familyId && role
-                ? (role === 'child' && settings.largeFontMode
+              {familyLoading
+                ? <PageSkeleton />
+                : role === 'child' && settings.largeFontMode
                   ? <ChildMode {...sharedProps} userName={profile?.full_name ?? ''} userColor={profile?.color ?? '#6366f1'} />
-                  : <TaskBoard {...sharedProps} userRole={role} members={members} />)
-                : <PageSkeleton />}
+                  : <TaskBoard {...sharedProps} userRole={role ?? 'guest'} members={members} />}
             </Suspense>
           } />
 
           <Route path="shopping" element={
             <Suspense fallback={<PageSkeleton />}>
-              {sharedProps.familyId
-                ? <ShoppingList {...sharedProps} canEdit={role !== 'guest'} />
-                : <PageSkeleton />}
+              {familyLoading
+                ? <PageSkeleton />
+                : <ShoppingList {...sharedProps} canEdit={role !== 'guest'} />}
             </Suspense>
           } />
 
           <Route path="meals" element={
             <Suspense fallback={<PageSkeleton />}>
-              {sharedProps.familyId
-                ? <MealPlanner {...sharedProps} canEdit={role === 'parent'} />
-                : <PageSkeleton />}
+              {familyLoading
+                ? <PageSkeleton />
+                : <MealPlanner {...sharedProps} canEdit={role === 'parent'} />}
             </Suspense>
           } />
 
