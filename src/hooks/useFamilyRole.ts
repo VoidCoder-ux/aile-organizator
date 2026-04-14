@@ -43,13 +43,10 @@ export function useFamilyRole(userId: string | null): FamilyRoleState {
       setRole(mem?.role ?? null);
 
       if (fam) {
-        // Tüm aile üyelerini profilleriyle getir
-        const { data } = await supabase
-          .from(TABLES.FAMILY_MEMBERS)
-          .select('*, profiles(*)')
-          .eq('family_id', fam.id)
-          .order('joined_at', { ascending: true });
-
+        // Tüm aile üyelerini RPC ile getir (direkt sorgu RLS döngüsüne yol açar)
+        const { data } = await supabase.rpc('get_family_members_list', {
+          p_family_id: fam.id,
+        });
         setMembers((data as FamilyMember[]) ?? []);
       }
     } catch (err) {
