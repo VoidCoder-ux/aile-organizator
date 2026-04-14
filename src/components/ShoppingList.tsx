@@ -82,7 +82,12 @@ export default function ShoppingList({ familyId, userId, canEdit = true }: Shopp
       image_url: null,
     };
 
-    await writeOfflineFirst(TABLES.SHOPPING_ITEMS, 'INSERT', payload as Record<string, unknown>);
+    const { queued, error: writeError } = await writeOfflineFirst(TABLES.SHOPPING_ITEMS, 'INSERT', payload as Record<string, unknown>);
+    if (queued && writeError) {
+      alert(`Ürün eklenemedi: ${writeError}`);
+      setIsSubmitting(false);
+      return;
+    }
     setItems((prev) => [payload as ShoppingItem, ...prev]);
 
     // Formu sıfırla, cursor'ı geri getir
