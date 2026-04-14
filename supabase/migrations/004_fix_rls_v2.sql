@@ -119,7 +119,6 @@ RETURNS TABLE (
     family_id UUID,
     user_id   UUID,
     role      TEXT,
-    nickname  TEXT,
     joined_at TIMESTAMPTZ,
     profiles  JSONB
 )
@@ -132,7 +131,6 @@ AS $$
         fm.family_id,
         fm.user_id,
         fm.role,
-        fm.nickname,
         fm.joined_at,
         to_jsonb(p) AS profiles
     FROM   public.family_members fm
