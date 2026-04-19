@@ -53,7 +53,7 @@ export default function ChildMode({ familyId, userId, userName, userColor }: Chi
       }
 
       if (!shoppingRes.error && shoppingRes.data) {
-        setShoppingItems((shoppingRes.data as ShoppingItem[]).slice(0, 5));
+        setShoppingItems(shoppingRes.data as ShoppingItem[]);
       }
     };
 

@@ -37,7 +37,7 @@ export function useNotifications(
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(notif.title, {
         body: notif.body,
-        icon: '/aile-organizator/icons/icon-192x192.png',
+        icon: `${import.meta.env.BASE_URL}icons/icon-192x192.png`,
         tag: notif.id,
       });
     }

@@ -28,50 +28,60 @@ export function useRealtimeSync<T>({
   enabled = true,
 }: UseRealtimeSyncOptions<T>): void {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  const subscribe = useCallback(() => {
-    if (!familyId || !enabled) return;
-
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
-
-    const channelName = `realtime:${table}:${familyId}:${Date.now()}`;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    channelRef.current = (supabase.channel(channelName) as any)
-      .on(
-        'postgres_changes',
-        { event, schema: 'public', table, filter: `family_id=eq.${familyId}` },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (payload: any) => {
-          const eventType = payload.eventType;
-          if (eventType === 'INSERT' && onInsert && payload.new) {
-            onInsert(payload.new as T);
-          } else if (eventType === 'UPDATE' && onUpdate && payload.new) {
-            onUpdate(payload.new as T);
-          } else if (eventType === 'DELETE' && onDelete && payload.old) {
-            onDelete(payload.old as Partial<T>);
-          }
-        }
-      )
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .subscribe((status: any) => {
-        if (status === 'CHANNEL_ERROR') {
-          setTimeout(subscribe, 3000);
-        }
-      });
-  }, [familyId, enabled, table, event, onInsert, onUpdate, onDelete]);
+  // Callback ref'leri: her render'da yeniden abone olmayı önler
+  const onInsertRef = useRef(onInsert);
+  const onUpdateRef = useRef(onUpdate);
+  const onDeleteRef = useRef(onDelete);
+  useEffect(() => {
+    onInsertRef.current = onInsert;
+    onUpdateRef.current = onUpdate;
+    onDeleteRef.current = onDelete;
+  }, [onInsert, onUpdate, onDelete]);
 
   useEffect(() => {
-    subscribe();
+    if (!familyId || !enabled) return;
+
+    const channelName = `realtime:${table}:${familyId}`;
+
+    const setupChannel = () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      channelRef.current = (supabase.channel(channelName) as any)
+        .on(
+          'postgres_changes',
+          { event, schema: 'public', table, filter: `family_id=eq.${familyId}` },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (payload: any) => {
+            const eventType = payload.eventType;
+            if (eventType === 'INSERT' && payload.new) {
+              onInsertRef.current?.(payload.new as T);
+            } else if (eventType === 'UPDATE' && payload.new) {
+              onUpdateRef.current?.(payload.new as T);
+            } else if (eventType === 'DELETE' && payload.old) {
+              onDeleteRef.current?.(payload.old as Partial<T>);
+            }
+          }
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .subscribe((status: any) => {
+          if (status === 'CHANNEL_ERROR') {
+            setTimeout(setupChannel, 3000);
+          }
+        });
+    };
+
+    setupChannel();
+
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [subscribe]);
+  }, [familyId, enabled, table, event]);
 }
 
 // ── Çoklu Tablo Dinleme ───────────────────────────────────────────────────────
