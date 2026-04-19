@@ -85,6 +85,17 @@ export async function markConflict(id: string): Promise<void> {
   }
 }
 
+/** Çakışma işaretini kaldır ve retry sayacını sıfırla (keep_local çözümü için) */
+export async function clearConflict(id: string): Promise<void> {
+  const database = await getDB();
+  const item = await database.get(STORE_NAME, id) as OfflineQueueItem | undefined;
+  if (item) {
+    item.conflictDetected = false;
+    item.retryCount = 0;
+    await database.put(STORE_NAME, item);
+  }
+}
+
 /** Kuyruk boyutu */
 export async function getQueueSize(): Promise<number> {
   const database = await getDB();

@@ -73,6 +73,17 @@ export default function Calendar({ familyId, userId, members, canCreate = true }
     new Set(members.map((m) => m.user_id))
   );
 
+  // members değişince visibleUsers'ı senkronla (RPC sonrası yüklenen üyeleri kapsa)
+  useEffect(() => {
+    setVisibleUsers((prev) => {
+      const next = new Set(prev);
+      for (const m of members) {
+        if (!next.has(m.user_id)) next.add(m.user_id);
+      }
+      return next;
+    });
+  }, [members]);
+
   const { writeOfflineFirst } = useOfflineSync();
 
   // Etkinlikleri yükle
@@ -121,9 +132,10 @@ export default function Calendar({ familyId, userId, members, canCreate = true }
         (isWithinInterval(day, { start, end }) && !isSameDay(day, end))
       );
     }).filter((e) => {
-      // Görünür kullanıcı filtresi
-      if (e.assigned_to.length === 0) return true;
-      return e.assigned_to.some((uid) => visibleUsers.has(uid));
+      // Görünür kullanıcı filtresi (assigned_to boş/null ise tüm aileye açık)
+      const assigned = e.assigned_to ?? [];
+      if (assigned.length === 0) return true;
+      return assigned.some((uid) => visibleUsers.has(uid));
     });
   };
 

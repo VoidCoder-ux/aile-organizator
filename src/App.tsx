@@ -158,6 +158,8 @@ function AppContent({
 }) {
   const { role, family, members, isLoading: familyLoading } = useFamilyRole(profile?.id ?? null);
 
+  // Aile + profil hazır değilse bileşenleri render etme (boş string familyId RLS sorgularını bozar)
+  const isReady = !!family && !!profile;
   const sharedProps = { familyId: family?.id ?? '', userId: profile?.id ?? '' };
 
   // Profil var ama aile yok → onboarding'e geri yönlendir
@@ -182,7 +184,7 @@ function AppContent({
 
           <Route path="calendar" element={
             <Suspense fallback={<PageSkeleton />}>
-              {familyLoading
+              {!isReady
                 ? <PageSkeleton />
                 : <Calendar {...sharedProps} members={members} canCreate={role === 'parent' || role === 'child'} />}
             </Suspense>
@@ -190,7 +192,7 @@ function AppContent({
 
           <Route path="tasks" element={
             <Suspense fallback={<PageSkeleton />}>
-              {familyLoading
+              {!isReady
                 ? <PageSkeleton />
                 : role === 'child' && settings.largeFontMode
                   ? <ChildMode {...sharedProps} userName={profile?.full_name ?? ''} userColor={profile?.color ?? '#6366f1'} />
@@ -200,7 +202,7 @@ function AppContent({
 
           <Route path="shopping" element={
             <Suspense fallback={<PageSkeleton />}>
-              {familyLoading
+              {!isReady
                 ? <PageSkeleton />
                 : <ShoppingList {...sharedProps} canEdit={role !== 'guest'} />}
             </Suspense>
@@ -208,7 +210,7 @@ function AppContent({
 
           <Route path="meals" element={
             <Suspense fallback={<PageSkeleton />}>
-              {familyLoading
+              {!isReady
                 ? <PageSkeleton />
                 : <MealPlanner {...sharedProps} canEdit={role === 'parent'} />}
             </Suspense>

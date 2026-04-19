@@ -11,6 +11,8 @@ import {
   flushQueue,
   getQueueSize,
   getAllQueued,
+  dequeue,
+  clearConflict,
 } from '@/lib/offlineQueue';
 import type { OfflineOperationType, SyncStatus, OfflineQueueItem } from '@/types';
 
@@ -40,6 +42,11 @@ export function useOfflineSync(
   const [conflicts, setConflicts] = useState<OfflineQueueItem[]>([]);
 
   const isSyncingRef = useRef(false);
+  // Stabil callback referansı — effect'lerde stale closure'ı önler
+  const onConflictDetectedRef = useRef(onConflictDetected);
+  useEffect(() => {
+    onConflictDetectedRef.current = onConflictDetected;
+  }, [onConflictDetected]);
 
   // Kuyruk durumunu güncelle
   const refreshQueueStatus = useCallback(async () => {
@@ -51,36 +58,6 @@ export function useOfflineSync(
     setConflicts(conflictItems);
     setConflictCount(conflictItems.length);
   }, []);
-
-  // Online/offline event listener
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      // Bağlantı gelince otomatik sync
-      triggerSync();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // İlk yüklemede kuyruk durumunu çek
-    refreshQueueStatus();
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Periyodik sync: 30 saniyede bir (online'sa)
-  useEffect(() => {
-    if (!isOnline) return;
-    const interval = setInterval(() => {
-      triggerSync();
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [isOnline]);
 
   const triggerSync = useCallback(async () => {
     if (isSyncingRef.current || !navigator.onLine) return;
@@ -105,7 +82,7 @@ export function useOfflineSync(
       await refreshQueueStatus();
 
       if (result.conflicts > 0) {
-        onConflictDetected?.(result.conflicts);
+        onConflictDetectedRef.current?.(result.conflicts);
       }
     } catch (err) {
       console.error('[OfflineSync] Sync error:', err);
@@ -113,7 +90,37 @@ export function useOfflineSync(
       isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  }, [refreshQueueStatus, onConflictDetected]);
+  }, [refreshQueueStatus]);
+
+  // Online/offline event listener
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Bağlantı gelince otomatik sync
+      triggerSync();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // İlk yüklemede kuyruk durumunu çek
+    refreshQueueStatus();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [refreshQueueStatus, triggerSync]);
+
+  // Periyodik sync: 30 saniyede bir (online'sa)
+  useEffect(() => {
+    if (!isOnline) return;
+    const interval = setInterval(() => {
+      triggerSync();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isOnline, triggerSync]);
 
   const writeOfflineFirst = useCallback(
     async (
@@ -160,23 +167,12 @@ export function useOfflineSync(
 
   const resolveConflict = useCallback(
     async (itemId: string, resolution: 'keep_local' | 'discard') => {
-      const { dequeue, markConflict } = await import('@/lib/offlineQueue');
-
       if (resolution === 'discard') {
         await dequeue(itemId);
       } else {
-        // keep_local: çakışma işaretini kaldır, tekrar denesin
-        // Basitçe conflictDetected=false yap ve retry
-        const all = await getAllQueued();
-        const item = all.find((i) => i.id === itemId);
-        if (item) {
-          item.conflictDetected = false;
-          item.retryCount = 0;
-          // DB'de güncelle
-          await markConflict(itemId); // önce işaretle
-          // Sonra trigger sync
-          await triggerSync();
-        }
+        // keep_local: çakışma işaretini kaldır, retry count'u sıfırla, tekrar dene
+        await clearConflict(itemId);
+        await triggerSync();
       }
 
       await refreshQueueStatus();
