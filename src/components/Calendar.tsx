@@ -216,14 +216,30 @@ export default function Calendar({ familyId, userId, members, canCreate = true }
       reminder_minutes: null,
     };
 
-    await writeOfflineFirst(
+    const { queued, error: writeError } = await writeOfflineFirst(
       TABLES.EVENTS,
       editingEvent ? 'UPDATE' : 'INSERT',
       payload as Record<string, unknown>
     );
 
-    setShowModal(false);
     setIsSubmitting(false);
+
+    if (queued && writeError) {
+      // Online'sa ama Supabase reddettiyse: kullanıcıya bildir
+      alert(`Etkinlik kaydedilemedi: ${writeError}`);
+      return;
+    }
+
+    // Optimistic UI: tarih aralığında ise listeye ekle
+    const optimistic = payload as unknown as CalendarEvent;
+    if (editingEvent) {
+      setEvents((prev) => prev.map((ev) => (ev.id === optimistic.id ? optimistic : ev)));
+    } else {
+      setEvents((prev) => [...prev.filter((ev) => ev.id !== optimistic.id), optimistic]);
+    }
+
+    setShowModal(false);
+    // Sunucudan tekrar çekerek doğrula (offline ise zaten optimistic UI kullanılır)
     fetchEvents();
   };
 
