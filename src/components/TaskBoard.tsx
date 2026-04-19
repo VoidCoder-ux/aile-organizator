@@ -157,7 +157,25 @@ export default function TaskBoard({ familyId, userId, userRole, members }: TaskB
       completed_at: null,
     };
 
-    await writeOfflineFirst(TABLES.TASKS, editingTask ? 'UPDATE' : 'INSERT', payload as Record<string, unknown>);
+    const { queued, error: writeError } = await writeOfflineFirst(
+      TABLES.TASKS,
+      editingTask ? 'UPDATE' : 'INSERT',
+      payload as Record<string, unknown>
+    );
+
+    if (queued && writeError) {
+      alert(`Görev kaydedilemedi: ${writeError}`);
+      return;
+    }
+
+    // Optimistic UI: yeni/güncel görevi hemen listeye yansıt
+    const optimistic = payload as unknown as Task;
+    if (editingTask) {
+      setTasks((prev) => prev.map((t) => (t.id === optimistic.id ? { ...t, ...optimistic } : t)));
+    } else {
+      setTasks((prev) => [optimistic, ...prev.filter((t) => t.id !== optimistic.id)]);
+    }
+
     setShowModal(false);
     fetchTasks();
   };
