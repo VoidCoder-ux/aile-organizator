@@ -199,8 +199,39 @@ export default function Calendar({ familyId, userId, members, canCreate = true }
     e.preventDefault();
     setIsSubmitting(true);
 
-    const payload = {
+    // Sadece dolu alanları gönder — PostgREST şema önbelleğinde olmayan
+    // opsiyonel sütunlarda 'column not found' hatasına düşmeyi önler.
+    const payload: Record<string, unknown> = {
       id: editingEvent?.id ?? generateId(),
+      family_id: familyId,
+      created_by: userId,
+      title: form.title,
+      start_at: new Date(form.start_at).toISOString(),
+      end_at: new Date(form.end_at).toISOString(),
+      color: form.color,
+      recurrence: form.recurrence,
+    };
+    if (form.description) payload.description = form.description;
+    if (form.location) payload.location = form.location;
+    if (form.all_day) payload.all_day = true;
+
+    const { queued, error: writeError } = await writeOfflineFirst(
+      TABLES.EVENTS,
+      editingEvent ? 'UPDATE' : 'INSERT',
+      payload
+    );
+
+    setIsSubmitting(false);
+
+    if (queued && writeError) {
+      // Online'sa ama Supabase reddettiyse: kullanıcıya bildir
+      alert(`Etkinlik kaydedilemedi: ${writeError}`);
+      return;
+    }
+
+    // Optimistic UI: tarih aralığında ise listeye ekle
+    const optimistic: CalendarEvent = {
+      id: payload.id as string,
       family_id: familyId,
       created_by: userId,
       title: form.title,
@@ -214,24 +245,9 @@ export default function Calendar({ familyId, userId, members, canCreate = true }
       recurrence_end_date: null,
       assigned_to: [],
       reminder_minutes: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
-
-    const { queued, error: writeError } = await writeOfflineFirst(
-      TABLES.EVENTS,
-      editingEvent ? 'UPDATE' : 'INSERT',
-      payload as Record<string, unknown>
-    );
-
-    setIsSubmitting(false);
-
-    if (queued && writeError) {
-      // Online'sa ama Supabase reddettiyse: kullanıcıya bildir
-      alert(`Etkinlik kaydedilemedi: ${writeError}`);
-      return;
-    }
-
-    // Optimistic UI: tarih aralığında ise listeye ekle
-    const optimistic = payload as unknown as CalendarEvent;
     if (editingEvent) {
       setEvents((prev) => prev.map((ev) => (ev.id === optimistic.id ? optimistic : ev)));
     } else {

@@ -143,24 +143,24 @@ export default function TaskBoard({ familyId, userId, userRole, members }: TaskB
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
+    // Sadece dolu alanları gönder — PostgREST şema önbellek tutarsızlıklarını atlat.
+    const payload: Record<string, unknown> = {
       id: editingTask?.id ?? generateId(),
       family_id: familyId,
       created_by: userId,
       title: form.title,
-      description: form.description || null,
-      assigned_to: form.assigned_to || null,
       priority: form.priority,
-      status: editingTask?.status ?? 'todo' as TaskStatus,
-      due_date: form.due_date || null,
+      status: editingTask?.status ?? ('todo' as TaskStatus),
       points: form.points,
-      completed_at: null,
     };
+    if (form.description) payload.description = form.description;
+    if (form.assigned_to) payload.assigned_to = form.assigned_to;
+    if (form.due_date) payload.due_date = form.due_date;
 
     const { queued, error: writeError } = await writeOfflineFirst(
       TABLES.TASKS,
       editingTask ? 'UPDATE' : 'INSERT',
-      payload as Record<string, unknown>
+      payload
     );
 
     if (queued && writeError) {
@@ -169,7 +169,21 @@ export default function TaskBoard({ familyId, userId, userRole, members }: TaskB
     }
 
     // Optimistic UI: yeni/güncel görevi hemen listeye yansıt
-    const optimistic = payload as unknown as Task;
+    const optimistic: Task = {
+      id: payload.id as string,
+      family_id: familyId,
+      created_by: userId,
+      assigned_to: form.assigned_to || null,
+      title: form.title,
+      description: form.description || null,
+      status: editingTask?.status ?? 'todo',
+      priority: form.priority,
+      due_date: form.due_date || null,
+      completed_at: null,
+      points: form.points,
+      created_at: editingTask?.created_at ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     if (editingTask) {
       setTasks((prev) => prev.map((t) => (t.id === optimistic.id ? { ...t, ...optimistic } : t)));
     } else {
