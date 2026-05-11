@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid));
+    }
+
+    function isMember(familyId) {
+      return signedIn() && exists(/databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid));
+    }
+
+    function isParent(familyId) {
+      return isMember(familyId) && memberDoc(familyId).data.role == "parent";
+    }
+
+    function isChildSelf(familyId, childId) {
+      return isMember(familyId) && request.auth.uid == childId && memberDoc(familyId).data.role == "child";
+    }
+
+    match /families/{familyId} {
+      allow read: if isMember(familyId);
+      allow write: if false;
+
+      match /members/{uid} {
+        allow read: if isMember(familyId);
+        allow create, update, delete: if false;
+      }
+
+      match /children/{childId} {
+        allow read: if isMember(familyId);
+        allow update: if isChildSelf(familyId, childId)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            "locationSharingEnabled",
+            "lastKnownLocation",
+            "batteryLevel",
+            "updatedAt"
+          ]);
+        allow create, delete: if false;
+      }
+
+      match /devices/{uid} {
+        allow read: if isMember(familyId);
+        allow create, update: if signedIn() && request.auth.uid == uid;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      match /sessions/{sessionId} {
+        allow read: if isMember(familyId);
+        allow create: if isParent(familyId)
+          && request.resource.data.parentId == request.auth.uid
+          && request.resource.data.status == "requested";
+        allow update: if isMember(familyId)
+          && (
+            (isChildSelf(familyId, resource.data.childId)
+              && request.resource.data.status in ["accepted", "declined", "active", "ended"])
+            || (isParent(familyId)
+              && request.resource.data.status in ["ended", "expired"])
+          );
+        allow delete: if false;
+
+        match /signaling/{signalId} {
+          allow read, create: if isMember(familyId);
+          allow update, delete: if false;
+        }
+      }
+
+      match /alerts/{alertId} {
+        allow read: if isMember(familyId);
+        allow create: if isChildSelf(familyId, request.resource.data.childId)
+          || (isParent(familyId) && request.resource.data.kind == "checkIn");
+        allow update, delete: if false;
+      }
+    }
+  }
+}

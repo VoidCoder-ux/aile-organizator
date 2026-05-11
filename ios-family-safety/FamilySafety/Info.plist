@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>Family Safety</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Used only after the child accepts a parent video request. The child can end the video session at any time.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Used only after the child accepts a parent audio or video request. The child can end the session at any time.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Used to share the child's location with paired parents only when location sharing is enabled by the child.</string>
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <true/>
+</dict>
+</plist>
