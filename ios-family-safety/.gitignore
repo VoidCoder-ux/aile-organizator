@@ -1,0 +1,22 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Local Firebase config
+FamilySafety/GoogleService-Info.plist
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
